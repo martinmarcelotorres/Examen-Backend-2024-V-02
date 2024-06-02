@@ -1,0 +1,23 @@
+server:
+    port: 8080
+
+spring:
+    r2dbc:
+        url: r2dbc:postgresql://localhost:5432/dbOrderManagment
+        username: postgres
+        password: 1234
+        pool:
+            enabled: true
+            initial-size: 1
+            max-size: 1
+    application:
+        name: Order-Managment
+    data:
+        mongodb:
+            uri: mongodb://localhost:27017/dbOrderManagment
+
+logging:
+    level:
+        org:
+            springframework:
+                r2dbc: DEBUG
