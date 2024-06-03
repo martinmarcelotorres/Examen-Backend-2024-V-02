@@ -1,9 +1,11 @@
 package com.ecommerce.order_managment.domain.dto;
 
+import com.ecommerce.order_managment.domain.model.OrderItem;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -12,9 +14,10 @@ public class OrderResponseDto implements Serializable {
 
     private String _id;
     private Integer clientId;
-    private Integer productId;
-    private Integer quantity;
+    private List<OrderItem> items;
     private Double total;
-    private String status;
-    private String orderDate;
+    private String status = "P";
+    private LocalDateTime orderDate = LocalDateTime.now();
 }
+
+

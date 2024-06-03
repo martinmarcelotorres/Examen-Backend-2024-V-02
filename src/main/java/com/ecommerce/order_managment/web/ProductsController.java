@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 
 
 @RestController
-@RequestMapping("/productos")
+@RequestMapping("/products")
 @RequiredArgsConstructor
 
 public class ProductsController {

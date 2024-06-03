@@ -6,29 +6,29 @@ import com.ecommerce.order_managment.domain.model.Order;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class OrderMapper {
 
     public static Order toModel(OrderRequestDto dto) {
         return new Order(
                 dto.getClientId(),
-                dto.getProductId(),
-                dto.getQuantity(),
+                dto.getItems(),
                 dto.getTotal(),
-                dto.getStatus(),
-                dto.getOrderDate()
+                dto.getStatus() != null ? dto.getStatus() : "P",
+                dto.getOrderDate() != null ? dto.getOrderDate() : LocalDateTime.now()
         );
     }
 
-    public static Order toModel(String id, OrderRequestDto dto) {
+    public static Order toModel(String _id, OrderRequestDto dto) {
         return new Order(
-                id,
+                _id,
                 dto.getClientId(),
-                dto.getProductId(),
-                dto.getQuantity(),
+                dto.getItems(),
                 dto.getTotal(),
-                dto.getStatus(),
-                dto.getOrderDate()
+                dto.getStatus() != null ? dto.getStatus() : "P",
+                dto.getOrderDate() != null ? dto.getOrderDate() : LocalDateTime.now()
         );
     }
 
@@ -36,8 +36,7 @@ public class OrderMapper {
         return new OrderResponseDto(
                 model.get_id(),
                 model.getClientId(),
-                model.getProductId(),
-                model.getQuantity(),
+                model.getItems(),
                 model.getTotal(),
                 model.getStatus(),
                 model.getOrderDate()

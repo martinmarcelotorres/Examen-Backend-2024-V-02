@@ -2,6 +2,7 @@ package com.ecommerce.order_managment.service;
 
 import com.ecommerce.order_managment.domain.dto.OrderRequestDto;
 import com.ecommerce.order_managment.domain.dto.OrderResponseDto;
+import com.ecommerce.order_managment.domain.model.Order;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -9,7 +10,7 @@ import reactor.core.publisher.Mono;
 @Service
 public interface OrderService {
 
-    Mono<OrderResponseDto> findById(Integer id);
+    Mono<OrderResponseDto> findById(String _id);
 
     Flux<OrderResponseDto> findAll();
 
@@ -21,7 +22,7 @@ public interface OrderService {
 
     Mono<OrderResponseDto> updateOrder(String _id, OrderRequestDto request);
 
-    Mono<Void> delete(Integer id);
-
     Mono<Void> confirmOrder(String _id);
+
+    Mono<Order> createOrder(OrderRequestDto orderRequestDto);
 }
