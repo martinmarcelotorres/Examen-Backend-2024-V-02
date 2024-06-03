@@ -5,6 +5,7 @@ import lombok.Data;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -13,8 +14,9 @@ public class OrderRequestDto implements Serializable {
 
     private String _id;
     private Integer clientId;
-    private List<OrderItem> items;
+    private List<OrderItem> items = new ArrayList<>();;
     private Double total;
     private String status = "P";
     private LocalDateTime orderDate = LocalDateTime.now();
+
 }

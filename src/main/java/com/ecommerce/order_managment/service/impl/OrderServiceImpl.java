@@ -6,7 +6,6 @@ import com.ecommerce.order_managment.domain.dto.OrderResponseDto;
 import com.ecommerce.order_managment.domain.mapper.OrderMapper;
 import com.ecommerce.order_managment.domain.model.Order;
 import com.ecommerce.order_managment.domain.model.OrderItem;
-import com.ecommerce.order_managment.domain.model.Products;
 import com.ecommerce.order_managment.exception.ResourceNotFoundException;
 import com.ecommerce.order_managment.repository.OrderRepository;
 import com.ecommerce.order_managment.repository.ProductsRepository;
@@ -68,21 +67,52 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.findById(_id)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("Order not found with id " + _id)))
                 .flatMap(order -> {
-                    // Actualizar los campos generales del pedido (clientId, total, status, etc.)
-                    order.setClientId(requestDto.getClientId());
-                    order.setTotal(requestDto.getTotal());
-                    order.setStatus(requestDto.getStatus());
-                    order.setOrderDate(requestDto.getOrderDate());
+                    return usersRepository.findById(requestDto.getClientId())
+                            .switchIfEmpty(Mono.error(new IllegalArgumentException("User with the given ID does not exist.")))
+                            .flatMap(user -> {
+                                if (!"CL".equals(user.getType()) || !"A".equals(user.getStatus())) {
+                                    return Mono.error(new IllegalArgumentException("User is not authorized to make orders."));
+                                }
 
-                    // Si es necesario, manejar la actualización de los productos
-                    // Por ejemplo, podrías tener métodos separados para agregar, eliminar o modificar productos en el pedido
+                                List<OrderItem> items = requestDto.getItems();
+                                return Flux.fromIterable(items)
+                                        .flatMap(item -> productsRepository.findById(item.getProductId())
+                                                .switchIfEmpty(Mono.error(new IllegalArgumentException("Product with ID " + item.getProductId() + " does not exist.")))
+                                                .flatMap(product -> {
+                                                    if (!"A".equals(product.getStatus()) || product.getStock() <= 0) {
+                                                        return Mono.error(new IllegalArgumentException("Product with ID " + product.getId() + " is not available."));
+                                                    }
+                                                    if (item.getQuantity() > product.getStock()) {
+                                                        return Mono.error(new IllegalArgumentException("Not enough stock available for product with ID " + product.getId()));
+                                                    }
+                                                    return Mono.just(item);
+                                                }))
+                                        .collectList()
+                                        .flatMap(orderItems -> {
+                                            // Actualiza los campos generales del pedido
+                                            order.setClientId(requestDto.getClientId());
+                                            order.setTotal(requestDto.getTotal());
+                                            order.setStatus(requestDto.getStatus());
+                                            order.setOrderDate(requestDto.getOrderDate());
+                                            order.setItems(orderItems);
 
-                    return orderRepository.save(order);
+                                            // Calcula el total del pedido sumando los subtotales de todos los productos
+                                            double total = orderItems.stream().mapToDouble(OrderItem::getSubtotal).sum();
+                                            order.setTotal(total);
+
+                                            // Actualiza el stock de los productos
+                                            return Flux.fromIterable(orderItems)
+                                                    .flatMap(item -> productsRepository.findById(item.getProductId())
+                                                            .flatMap(product -> {
+                                                                product.setStock(product.getStock() - item.getQuantity());
+                                                                return productsRepository.save(product);
+                                                            }))
+                                                    .then(orderRepository.save(order));
+                                        });
+                            });
                 })
                 .map(OrderMapper::toDto);
     }
-
-
 
     @Override
     public Mono<Void> confirmOrder(String _id) {
@@ -115,18 +145,18 @@ public class OrderServiceImpl implements OrderService {
                                         if (item.getQuantity() > product.getStock()) {
                                             return Mono.error(new IllegalArgumentException("Not enough stock available for product with ID " + product.getId()));
                                         }
-                                        // Actualizar el stock del producto
+                                        // Actualiza el stock del producto
                                         product.setStock(product.getStock() - item.getQuantity());
-                                        // Calcular el subtotal del producto
+                                        // Calcula el subtotal del producto
                                         double subtotal = product.getPrice() * item.getQuantity();
                                         item.setSubtotal(subtotal);
                                         return Mono.just(item);
                                     }))
                             .collectList()
                             .flatMap(orderItems -> {
-                                // Calcular el total del pedido sumando los subtotales de todos los productos
+                                // Calcula el total del pedido sumando los subtotales de todos los productos
                                 double total = orderItems.stream().mapToDouble(OrderItem::getSubtotal).sum();
-                                // Crear el pedido con la lista de items y el total calculado
+                                // Crea el pedido con la lista de items y el total calculado
                                 Order order = new Order(orderRequestDto.getClientId(), orderItems, total, orderRequestDto.getStatus(), LocalDateTime.now());
                                 return orderRepository.save(order);
                             });

@@ -16,5 +16,4 @@ public class ProductsResponseDto implements Serializable {
     private Double price;
     private Integer stock;
     private String status;
-
 }

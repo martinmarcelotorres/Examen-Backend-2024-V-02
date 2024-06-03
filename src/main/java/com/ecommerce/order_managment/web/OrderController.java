@@ -2,8 +2,6 @@ package com.ecommerce.order_managment.web;
 
 import com.ecommerce.order_managment.domain.dto.OrderRequestDto;
 import com.ecommerce.order_managment.domain.dto.OrderResponseDto;
-import com.ecommerce.order_managment.domain.dto.ProductsRequestDto;
-import com.ecommerce.order_managment.domain.dto.ProductsResponseDto;
 import com.ecommerce.order_managment.domain.model.Order;
 import com.ecommerce.order_managment.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -21,10 +19,8 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    @GetMapping(value = "/list", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_EVENT_STREAM_VALUE})
-    public Flux<OrderResponseDto> findAll() {
-        return this.orderService.findAll();
-    }
+    @GetMapping(value = "/list", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Flux<OrderResponseDto> findAll() {return this.orderService.findAll();}
 
     @GetMapping(value = "/listP", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_EVENT_STREAM_VALUE})
     public Flux<OrderResponseDto> findPending() {
@@ -41,9 +37,10 @@ public class OrderController {
         return this.orderService.findById(_id);
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping("/updateOrder/{id}")
     public Mono<OrderResponseDto> updateOrder(@PathVariable String id, @RequestBody OrderRequestDto requestDto) {
-        return orderService.updateOrder(id, requestDto);
+        return orderService.updateOrder(id, requestDto)
+                .onErrorResume(e -> Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage())));
     }
 
     @ResponseStatus(HttpStatus.CREATED)
@@ -57,6 +54,5 @@ public class OrderController {
     public Mono<Void> confirmOrder(@PathVariable("id") String _id) {
         return this.orderService.confirmOrder(_id);
     }
-
 
 }
